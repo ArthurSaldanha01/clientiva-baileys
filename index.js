@@ -1,14 +1,16 @@
 import express from 'express';
-import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys';
+import baileys from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
 import fs from 'fs';
+
+const { default: makeWASocket, useMultiFileAuthState } = baileys;
 
 const app = express();
 app.use(express.json());
 
 let sock;
 
-// 🔁 Apaga sessão anterior para forçar novo QR se necessário
+// 🔁 Limpa sessão anterior
 if (fs.existsSync('./auth')) {
   fs.rmSync('./auth', { recursive: true, force: true });
   console.log('🧹 Sessão antiga removida. Será gerado novo QR.');
@@ -30,10 +32,10 @@ async function connectToWhatsApp() {
     if (connection === 'open') {
       console.log('✅ Conectado ao WhatsApp!');
     } else if (connection === 'close') {
-      console.log('❌ Desconectado do WhatsApp!');
+      console.log('❌ Desconectado!');
       if (lastDisconnect?.error?.output?.statusCode !== 401) {
         console.log('🔁 Tentando reconectar...');
-        connectToWhatsApp(); // reconecta automaticamente
+        connectToWhatsApp();
       }
     }
   });
