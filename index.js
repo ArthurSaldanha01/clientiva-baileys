@@ -1,14 +1,18 @@
 import express from 'express';
-import { create } from '@whiskeysockets/baileys';
+import baileys from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
+
+const { default: makeWASocket, useSingleFileAuthState } = baileys;
 
 const app = express();
 app.use(express.json());
 
+const { state, saveState } = useSingleFileAuthState('./auth_info.json');
 let sock;
 
 async function connectToWhatsApp() {
-  sock = await create({ printQRInTerminal: true });
+  sock = makeWASocket({ auth: state });
+  sock.ev.on('creds.update', saveState);
 
   sock.ev.on('connection.update', ({ connection, qr }) => {
     if (qr) qrcode.generate(qr, { small: true });
