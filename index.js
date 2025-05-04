@@ -1,11 +1,18 @@
-import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys';
 import express from 'express';
+import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
+import fs from 'fs';
 
 const app = express();
 app.use(express.json());
 
 let sock;
+
+// 🔁 Apaga sessão anterior para forçar novo QR se necessário
+if (fs.existsSync('./auth')) {
+  fs.rmSync('./auth', { recursive: true, force: true });
+  console.log('🧹 Sessão antiga removida. Será gerado novo QR.');
+}
 
 async function connectToWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState('auth');
@@ -23,10 +30,10 @@ async function connectToWhatsApp() {
     if (connection === 'open') {
       console.log('✅ Conectado ao WhatsApp!');
     } else if (connection === 'close') {
-      console.log('❌ Desconectado!');
+      console.log('❌ Desconectado do WhatsApp!');
       if (lastDisconnect?.error?.output?.statusCode !== 401) {
         console.log('🔁 Tentando reconectar...');
-        connectToWhatsApp(); // reconectar automaticamente
+        connectToWhatsApp(); // reconecta automaticamente
       }
     }
   });
@@ -45,7 +52,9 @@ app.post('/enviar', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => res.send('✅ Servidor do Baileys está rodando!'));
+app.get('/', (req, res) => {
+  res.send('✅ Clientiva Baileys API rodando!');
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
